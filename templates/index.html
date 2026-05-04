@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatOps Pro | Live Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+--bg: #0f3329;
+--glass: rgba(0,200,150,0.08);
+--glass-border: rgba(0,200,150,0.15);
+--accent: #00c896;
+--accent-glow: rgba(0,200,150,0.4);
+--cyan: #00e5b0;
+--green: #00c896;
+--red: #ff6b9d;
+--yellow: #00e5b0;
+--text: #ffffff;
+--muted: #7eb8a8;
+}
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Ambient Background ── */
+    .bg-orbs {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.3;
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+    .orb-1 { background: #00C896; top: -200px; left: -100px; }
+    .orb-2 { background: #00a878; bottom: -150px; right: -100px; }
+    .orb-3 { background: #00e5b0; top: 40%; left: 40%; }
+    @keyframes drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(40px, 30px) scale(1.08); }
+    }
+
+    /* Grid overlay */
+    .grid-overlay {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0,200,150,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,200,150,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* ── Glass ── */
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+    .glass::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
+      pointer-events: none;
+      border-radius: inherit;
+    }
+
+    .glass-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .glass-card:hover {
+      border-color: rgba(0,200,150,0.3);
+      box-shadow: 0 0 30px rgba(0,200,150,0.15);
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,150,0.5), transparent);
+      pointer-events: none;
+    }
+
+    /* ── Typography ── */
+    .font-display { font-family: 'Syne', sans-serif; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+
+    /* ── Layout ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      grid-template-rows: 1fr;
+      height: 100vh;
+      gap: 16px;
+      padding: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      padding: 24px 16px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 4px 8px 28px;
+      border-bottom: 1px solid var(--glass-border);
+      margin-bottom: 24px;
+    }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: linear-gradient(135deg, #00C896, #00E5B0);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 25px rgba(0,200,150,0.6);
+      flex-shrink: 0;
+    }
+    .logo-text {
+      font-family: 'Syne', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #00E5B0, #00C896);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+    .logo-sub {
+      font-size: 10px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 1px;
+    }
+
+    .nav-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      padding: 0 8px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+      text-decoration: none;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover {
+      background: var(--glass-hover);
+      color: var(--text);
+    }
+    .nav-item.active {
+      background: rgba(0,200,150,0.15);
+      color: #00E5B0;
+      border: 1px solid rgba(0,200,150,0.25);
+    }
+    .nav-item.active .nav-icon { color: #3b82f6; }
+
+    .status-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 6px var(--green);
+      animation: pulse-dot 2s ease-in-out infinite;
+      margin-left: auto;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--glass-border);
+    }
+    .disconnect-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(0,200,150,0.7);
+      transition: all 0.2s;
+      text-decoration: none;
+      width: 100%;
+      border: none;
+      background: none;
+    }
+    .disconnect-btn:hover {
+      background: rgba(239,68,68,0.1);
+    }
+
+    /* ── Main ── */
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow: hidden;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      flex-shrink: 0;
+    }
+    .topbar-left h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #fff 40%, #94a3b8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .topbar-left p {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .nodes-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(0,200,150,0.1);
+      border: 1px solid rgba(0,200,150,0.3);
+      border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: #00E5B0;
+      letter-spacing: 1px;
+    }
+    .nodes-badge .ping {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    /* Stats row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .stat-card {
+      padding: 20px 22px;
+    }
+    .stat-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .stat-value.blue   { color: #00E5B0; }
+    .stat-value.purple { color: #00C896; }
+    .stat-value.cyan   { color: #00E5B0; }
+    .stat-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Middle row */
+    .middle-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    /* AI Prediction */
+    .pred-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .pred-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pred-title .warn-icon { color: #f59e0b; }
+    .pred-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+    }
+    .pred-body { padding: 12px 18px; display: flex; flex-direction: column; gap: 8px; }
+
+    .service-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      transition: all 0.3s;
+    }
+    .service-row:hover { background: rgba(255,255,255,0.04); }
+    .service-name {
+      font-size: 12px;
+      font-weight: 600;
+      width: 90px;
+      flex-shrink: 0;
+    }
+    .risk-bar-wrap {
+      flex: 1;
+      height: 6px;
+      background: rgba(255,255,255,0.07);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .risk-bar-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 1s ease;
+    }
+    .risk-pct {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      width: 34px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .risk-action {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--muted);
+      width: 70px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Resource Monitor */
+    .res-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+    .res-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .res-body { padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; }
+
+    .res-row { display: flex; flex-direction: column; gap: 6px; }
+    .res-row-top { display: flex; justify-content: space-between; align-items: center; }
+    .res-row-label { font-size: 11px; font-weight: 500; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .res-row-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600; }
+    .res-track {
+      height: 5px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 100px;
+      overflow: hidden;
+    }
+    .res-fill {
+      height: 100%;
+      border-radius: 100px;
+      transition: width 1.5s ease;
+    }
+
+    /* Terminal */
+    .terminal-wrap {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100px;
+    }
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 12px;
+      border-bottom: 1px solid var(--glass-border);
+      flex-shrink: 0;
+    }
+    .terminal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .term-dots { display: flex; gap: 5px; }
+    .term-dot {
+      width: 9px; height: 9px; border-radius: 50%;
+    }
+    .dot-red { background: #ef4444; }
+    .dot-yellow { background: #f59e0b; }
+    .dot-green { background: #10b981; }
+
+    .log-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      line-height: 1.7;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-height: 0;
+    }
+    .log-area::-webkit-scrollbar { width: 3px; }
+    .log-area::-webkit-scrollbar-track { background: transparent; }
+    .log-area::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+
+    .log-line { display: flex; gap: 14px; animation: fadeSlide 0.3s ease; }
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .log-time { color: #334155; flex-shrink: 0; font-size: 11px; }
+    .log-prompt { color: #3b82f6; flex-shrink: 0; }
+    .log-msg { color: #94a3b8; }
+    .log-msg.success { color: #34d399; }
+    .log-msg.error { color: #f87171; }
+    .log-msg.warn { color: #fbbf24; }
+    .log-msg.info { color: #60a5fa; font-style: italic; }
+    .log-msg.system { color: #a78bfa; }
+
+    .cmd-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+    .cmd-prompt {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #3b82f6;
+      flex-shrink: 0;
+    }
+    .cmd-input {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      caret-color: #3b82f6;
+    }
+    .cmd-input::placeholder { color: #334155; }
+    .cmd-hint {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #1e293b;
+    }
+
+    /* Animations */
+    .fade-in { animation: fadeIn 0.5s ease forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+    .slide-up { animation: slideUp 0.5s ease forwards; opacity: 0; transform: translateY(12px); }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+    [style*="animation-delay"] { animation-fill-mode: both; }
+  </style>
+</head>
+
+<body>
+  <!-- Ambient background -->
+  <div class="bg-orbs">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+  <div class="grid-overlay"></div>
+
+  <div class="layout">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="glass sidebar slide-up" style="animation-delay:0.05s">
+      <!-- Logo -->
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">ChatOps</div>
+          <div class="logo-sub">v2.6 · PROD</div>
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <div class="nav-label">Main Menu</div>
+      <a href="#" class="nav-item active">
+        <svg class="nav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        Dashboard
+        <span class="status-dot"></span>
+      </a>
+      <a href="#" class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20v-6"></path>
+        </svg>
+        Analytics
+      </a>
+      <a href="#" class="nav-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path>
+        </svg>
+        Services
+      </a>
+      <a href="#" class="nav-item" onclick="openSettings()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        Settings
+      </a>
+
+      <!-- Footer -->
+      <div class="sidebar-footer">
+        <a href="/logout" class="disconnect-btn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          Disconnect
+        </a>
+      </div>
+    </aside>
+
+    <!-- ── MAIN ── -->
+    <main class="main">
+
+      <!-- Topbar -->
+      <div class="glass topbar slide-up" style="animation-delay:0.1s">
+        <div class="topbar-left">
+          <h1>System Status</h1>
+          <p>Global Production Grid</p>
+        </div>
+        <div class="nodes-badge">
+          <span class="ping"></span>
+          Nodes Healthy
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="glass-card stat-card slide-up" style="animation-delay:0.15s">
+          <div class="stat-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Network Latency
+          </div>
+          <div class="stat-value blue" id="latency-val">--ms</div>
+          <div class="stat-sub">↓ avg last 60s</div>
+        </div>
+        <div class="glass-card stat-card slide-up" style="animation-delay:0.2s">
+          <div class="stat-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Active Builds
+          </div>
+          <div class="stat-value purple" id="deploy-val">--</div>
+          <div class="stat-sub">pipelines running</div>
+        </div>
+        <div class="glass-card stat-card slide-up" style="animation-delay:0.25s">
+          <div class="stat-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Error Threshold
+          </div>
+          <div class="stat-value cyan" id="error-val">OPTIMAL</div>
+          <div class="stat-sub">all clusters clean</div>
+        </div>
+      </div>
+
+      <!-- Middle row -->
+      <div class="middle-row">
+
+        <!-- AI Prediction -->
+        <div class="glass-card slide-up" style="animation-delay:0.3s">
+          <div class="pred-header">
+            <div class="pred-title">
+              <svg class="warn-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              AI Failure Prediction
+            </div>
+            <div class="pred-time" id="pred-time">--:--:--</div>
+          </div>
+          <div class="pred-body" id="prediction-list"></div>
+        </div>
+
+        <!-- Resource Monitor -->
+        <div class="glass-card slide-up" style="animation-delay:0.35s">
+          <div class="res-header">
+            <div class="res-title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2" style="margin-right:8px;display:inline"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              Resource Monitor
+            </div>
+            <div class="pred-time" id="res-time">--:--:--</div>
+          </div>
+          <div class="res-body" id="resource-body">
+            <div class="res-row">
+              <div class="res-row-top">
+                <div class="res-row-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+                  CPU Usage
+                </div>
+                <div class="res-row-val" id="cpu-val" style="color:#60a5fa">--%</div>
+              </div>
+              <div class="res-track"><div class="res-fill" id="cpu-bar" style="width:0%;background:linear-gradient(90deg,#3b82f6,#06b6d4)"></div></div>
+            </div>
+            <div class="res-row">
+              <div class="res-row-top">
+                <div class="res-row-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                  RAM Usage
+                </div>
+                <div class="res-row-val" id="ram-val" style="color:#a78bfa">--%</div>
+              </div>
+              <div class="res-track"><div class="res-fill" id="ram-bar" style="width:0%;background:linear-gradient(90deg,#7c3aed,#a78bfa)"></div></div>
+            </div>
+            <div class="res-row">
+              <div class="res-row-top">
+                <div class="res-row-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Network I/O
+                </div>
+                <div class="res-row-val" id="net-val" style="color:#34d399">-- MB/s</div>
+              </div>
+              <div class="res-track"><div class="res-fill" id="net-bar" style="width:0%;background:linear-gradient(90deg,#059669,#10b981)"></div></div>
+            </div>
+            <div class="res-row">
+              <div class="res-row-top">
+                <div class="res-row-label">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                  Disk I/O
+                </div>
+                <div class="res-row-val" id="disk-val" style="color:#fbbf24">-- MB/s</div>
+              </div>
+              <div class="res-track"><div class="res-fill" id="disk-bar" style="width:0%;background:linear-gradient(90deg,#d97706,#f59e0b)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Terminal -->
+      <div class="glass-card terminal-wrap slide-up" style="animation-delay:0.4s">
+        <div class="terminal-header">
+          <div class="terminal-title">
+            <div class="term-dots">
+              <div class="term-dot dot-red"></div>
+              <div class="term-dot dot-yellow"></div>
+              <div class="term-dot dot-green"></div>
+            </div>
+            <span style="margin-left:8px;font-family:'Syne',sans-serif;font-size:13px;font-weight:700;">Command Terminal</span>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#334155;">root@chatops · bash</div>
+        </div>
+        <div class="log-area" id="log-area"></div>
+        <div class="cmd-bar">
+          <span class="cmd-prompt">root@chatops:~#</span>
+          <input class="cmd-input" id="cmd-input" type="text" placeholder="Type a command... try /help" autocomplete="off" spellcheck="false">
+          <span class="cmd-hint">ENTER ↵</span>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    async function updateMLPrediction() {
+  try {
+    const res = await fetch('/predict');
+    const data = await res.json();
+    const risk = data.risk;
+    
+    // Update Payment API with real ML risk
+    services[0].risk = risk;
+    services[0].color = risk > 70 ? 'red' : risk > 40 ? 'yellow' : 'green';
+    services[0].action = risk > 70 ? 'CRITICAL' : risk > 40 ? 'WARNING' : 'STABLE';
+    
+    updatePredictions();
+  } catch(e) {
+    console.log('ML predict error:', e);
+  }
+}
+    // ── Prediction Data ──
+    const services = [
+      { name: "Payment API", risk: 80, action: "Scaled Pods",  color: "red" },
+      { name: "Auth Service", risk: 33, action: "Monitoring",  color: "green" },
+      { name: "DB Cluster",   risk: 60, action: "Alert Sent",  color: "yellow" },
+      { name: "API Gateway",  risk: 22, action: "Stable",      color: "green" },
+    ];
+
+    const riskColors = {
+      red:    { bar: "linear-gradient(90deg,#ef4444,#f87171)", text: "#f87171" },
+      yellow: { bar: "linear-gradient(90deg,#d97706,#fbbf24)", text: "#fbbf24" },
+      green:  { bar: "linear-gradient(90deg,#059669,#34d399)", text: "#34d399" },
+    };
+
+    function getColor(risk) {
+      if (risk >= 70) return "red";
+      if (risk >= 50) return "yellow";
+      return "green";
+    }
+
+    function updatePredictions() {
+      const list = document.getElementById('prediction-list');
+      document.getElementById('pred-time').innerText = new Date().toLocaleTimeString();
+      list.innerHTML = services.map(s => {
+        const c = riskColors[s.color];
+        return `
+          <div class="service-row">
+            <div class="service-name" style="font-size:12px;font-weight:600">${s.name}</div>
+            <div class="risk-bar-wrap">
+              <div class="risk-bar-fill" style="width:${s.risk}%;background:${c.bar}"></div>
+            </div>
+            <div class="risk-pct" style="color:${c.text}">${s.risk}%</div>
+            <div class="risk-action">${s.action}</div>
+          </div>`;
+      }).join('');
+
+      // Slightly fluctuate
+      services.forEach(s => {
+        s.risk = Math.min(97, Math.max(8, s.risk + ((Math.random() * 6 - 3) | 0)));
+        s.color = getColor(s.risk);
+      });
+    }
+
+    // ── Stats ──
+    async function updateStats() {
+      try {
+        const res = await fetch('/stats');
+        const data = await res.json();
+        document.getElementById('latency-val').innerText = data.latency;
+        document.getElementById('deploy-val').innerText  = data.deployments;
+        document.getElementById('error-val').innerText   = data.errors || 'OPTIMAL';
+
+        // Resource bars
+        if (data.cpu !== undefined) {
+          const cpu = data.cpu;
+          const ram = data.ram;
+          const net = (Math.random() * 80 + 20).toFixed(1);
+          const disk = (Math.random() * 50 + 10).toFixed(1);
+
+          document.getElementById('cpu-val').innerText = cpu + '%';
+          document.getElementById('ram-val').innerText = ram + '%';
+          document.getElementById('net-val').innerText = net + ' MB/s';
+          document.getElementById('disk-val').innerText = disk + ' MB/s';
+
+          document.getElementById('cpu-bar').style.width  = cpu + '%';
+          document.getElementById('ram-bar').style.width  = ram + '%';
+          document.getElementById('net-bar').style.width  = Math.min(net, 100) + '%';
+          document.getElementById('disk-bar').style.width = Math.min(disk, 100) + '%';
+          document.getElementById('res-time').innerText = new Date().toLocaleTimeString();
+        }
+      } catch(e) {
+        // fallback random
+        document.getElementById('latency-val').innerText = (Math.floor(Math.random()*30)+28) + 'ms';
+        document.getElementById('deploy-val').innerText  = Math.floor(Math.random()*6)+12;
+      }
+    }
+
+    // ── Terminal ──
+    const logArea = document.getElementById('log-area');
+    const input   = document.getElementById('cmd-input');
+
+    function addLog(msg, type = '') {
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      div.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span class="log-msg ${type}">${msg}</span>`;
+      logArea.appendChild(div);
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    function addCmd(cmd) {
+      const time = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      div.innerHTML = `
+        <span class="log-time">[${time}]</span>
+        <span class="log-prompt">root@chatops:~#</span>
+        <span class="log-msg" style="color:#e2e8f0;margin-left:6px">${cmd}</span>`;
+      logArea.appendChild(div);
+      logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    input.addEventListener('keydown', async (e) => {
+      if (e.key !== 'Enter') return;
+      const cmd = input.value.trim();
+      if (!cmd) return;
+      input.value = '';
+      addCmd(cmd);
+      try {
+        const res  = await fetch('/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: cmd })
+        });
+        const data = await res.json();
+        const msg  = data.response || 'No response.';
+        const type = msg.includes('✅') ? 'success'
+                   : msg.includes('❌') || msg.includes('failed') ? 'error'
+                   : msg.includes('⚠') ? 'warn'
+                   : msg.includes('---') ? 'system'
+                   : '';
+        addLog(msg, type);
+      } catch(err) {
+        addLog('❌ Connection error: ' + err.message, 'error');
+      }
+    });
+
+    // ── Init ──
+    updatePredictions();
+    updateStats();
+    setInterval(updatePredictions, 5000);
+    setInterval(updateMLPrediction, 6000);
+    updateMLPrediction();
+    setInterval(updateStats, 3000);
+    addLog('Secure kernel connection established.', 'info');
+    addLog('All systems nominal. Type /help for available commands.', 'info');
+  </script>
+</body>
+</html>

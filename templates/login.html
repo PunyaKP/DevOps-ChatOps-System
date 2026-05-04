@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ChatOps Pro | Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #0f3329;
+      font-family: 'Syne', sans-serif;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.25;
+      animation: drift 12s ease-in-out infinite alternate;
+    }
+    .orb-1 { width:500px; height:500px; background:#00c896; top:-150px; left:-100px; }
+    .orb-2 { width:400px; height:400px; background:#00a878; bottom:-100px; right:-100px; animation-delay:-6s; }
+
+    @keyframes drift {
+      from { transform: translate(0,0); }
+      to   { transform: translate(30px,20px); }
+    }
+
+    .login-card {
+      background: rgba(0,200,150,0.06);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(0,200,150,0.2);
+      border-radius: 24px;
+      padding: 48px 40px;
+      width: 400px;
+      position: relative;
+      z-index: 1;
+      box-shadow: 0 0 60px rgba(0,200,150,0.1);
+    }
+    .login-card::before {
+      content:'';
+      position:absolute;
+      top:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg, transparent, rgba(0,200,150,0.6), transparent);
+      border-radius: 24px;
+    }
+
+    .logo-icon {
+      width: 56px; height: 56px;
+      background: linear-gradient(135deg, #00c896, #00e5b0);
+      border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px;
+      box-shadow: 0 0 30px rgba(0,200,150,0.5);
+    }
+
+    h1 {
+      font-size: 26px;
+      font-weight: 800;
+      text-align: center;
+      background: linear-gradient(135deg, #00e5b0, #00c896);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #7eb8a8;
+      letter-spacing: 2px;
+      margin-bottom: 32px;
+    }
+
+    .input-wrap {
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .input-wrap input {
+      width: 100%;
+      background: rgba(0,200,150,0.06);
+      border: 1px solid rgba(0,200,150,0.2);
+      border-radius: 12px;
+      padding: 14px 16px;
+      color: #ffffff;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.3s;
+    }
+    .input-wrap input::placeholder { color: #4a8a7a; }
+    .input-wrap input:focus {
+      border-color: rgba(0,200,150,0.5);
+      box-shadow: 0 0 20px rgba(0,200,150,0.15);
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #00c896, #00a878);
+      border: none;
+      border-radius: 12px;
+      color: #ffffff;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.3s;
+      box-shadow: 0 0 25px rgba(0,200,150,0.3);
+    }
+    .login-btn:hover {
+      box-shadow: 0 0 40px rgba(0,200,150,0.5);
+      transform: translateY(-1px);
+    }
+
+    .error-msg {
+      color: #ff6b9d;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      text-align: center;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .footer-text {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #2a6a5a;
+      margin-top: 24px;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="login-card">
+    <!-- Logo -->
+    <div class="logo-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 17 10 11 4 5"></polyline>
+        <line x1="12" y1="19" x2="20" y2="19"></line>
+      </svg>
+    </div>
+
+    <h1>ChatOps Pro</h1>
+    <p class="subtitle">SECURE TERMINAL ACCESS</p>
+
+    <div class="input-wrap">
+      <input type="text" id="username" placeholder="Username" autocomplete="off">
+    </div>
+    <div class="input-wrap">
+      <input type="password" id="password" placeholder="Password">
+    </div>
+
+    <button class="login-btn" onclick="doLogin()">AUTHORIZE ACCESS</button>
+    <div class="error-msg" id="error-msg">❌ Invalid credentials</div>
+
+    <p class="footer-text">🔒 ENCRYPTED · DEVOPS CHATOPS SYSTEM</p>
+  </div>
+
+  <script>
+    async function doLogin() {
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({username, password})
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        window.location.href = '/';
+      } else {
+        document.getElementById('error-msg').style.display = 'block';
+      }
+    }
+
+    // Allow Enter key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>
